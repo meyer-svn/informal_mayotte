@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparateur Spatial AEF & TESSERA</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            overflow: hidden; /* Évite les barres de défilement de page parasites */
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        /* Style du panneau d'information (en haut à droite) */
+        .control-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            min-width: 220px;
+            pointer-events: auto; /* Permet d'interagir avec le panneau */
+        }
+        .control-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        .info-text {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
+            background: #f5f5f5;
+            padding: 6px;
+            border-radius: 4px;
+        }
+        .zoom-indicator {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #555;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+            line-height: 1.4;
+        }
+
+        /* -------------------------------------- */
+        /* STYLE DU SLIDER VERTICAL (SWIPE)       */
+        /* -------------------------------------- */
+        #slider-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001; /* Positionné impérativement au-dessus de la carte */
+            cursor: ew-resize; /* Curseur flèches horizontales */
+            box-shadow: 0 0 8px rgba(0,0,0,0.6);
+        }
+        #slider-thumb {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            user-select: none;
+            border: 2px solid #ddd;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div id="slider-line">
+        <div id="slider-thumb">◄►</div>
+    </div>
+
+    <div class="control-panel">
+        <h3>Comparateur visuel</h3>
+        <div class="info-text">
+            ◄ GAUCHE : AEF | DROITE : TESSERA ►
+        </div>
+        
+        <div class="zoom-indicator" id="zoomInfo">
+            Zoom actuel : - <br>Fichier actif : -
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // 1. Initialisation de la carte (coordonnées par défaut, ajustées au chargement)
+        const map = L.map('map').setView([0, 0], 2);
+
+        // 2. Configuration des fonds de carte (Google Maps & OpenStreetMap)
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+        const googleSatelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20, 
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: '© Google Maps'
+        }).addTo(map); // Activé par défaut
+
+        // Ajout du petit carré de sélection de fond en haut à gauche
+        L.control.layers({ "Google Satellite": googleSatelliteLayer, "OpenStreetMap": osmLayer }, null, { position: 'topleft' }).addTo(map);
+
+        // 3. Création des "panneaux" (panes) Leaflet pour isoler la gauche de la droite
+        map.createPane('leftPane');
+        map.createPane('rightPane');
+        map.getPane('leftPane').style.zIndex = 400;  // Niveau standard pour les vecteurs
+        map.getPane('rightPane').style.zIndex = 400;
+
+        // 4. Règle de style (1:bleu, 2:beige, 3:rouge, sans bordure)
+        function styleFeature(feature) {
+            let val = feature.properties.valeur_pixel;
+            let polygonColor = 'gray';
+
+            if (val === 1) polygonColor = '#0000FF'; 
+            if (val === 2) polygonColor = '#F5F5DC'; 
+            if (val === 3) polygonColor = '#FF0000'; 
+
+            return { 
+                fillColor: polygonColor, 
+                weight: 0,       // Aucune bordure de polygone
+                fillOpacity: 0.7 // Opacité à 70% pour voir le fond satellite en transparence
+            };
+        }
+
+        // 5. Cartographie des fichiers GeoJSON selon les résolutions
+        const config = {
+            AEF: {
+                '1x': { file: 'AEF_masked.geojson', layer: null },
+                '6x': { file: 'AEF_masked_6x.geojson', layer: null },
+                '24x': { file: 'AEF_masked_24x.geojson', layer: null }
+            },
+            TESSERA: {
+                '1x': { file: 'TESSERA_masked.geojson', layer: null },
+                '6x': { file: 'TESSERA_masked_6x.geojson', layer: null },
+                '24x': { file: 'TESSERA_masked_24x.geojson', layer: null }
+            }
+        };
+
+        // Groupes de couches Leaflet
+        let leftLayerGroup = L.layerGroup().addTo(map);
+        let rightLayerGroup = L.layerGroup().addTo(map);
+
+        // Variable pour savoir si on cadre la carte la toute première fois
+        let firstLoad = true;
+
+        // 6. Fonction principale de chargement dynamique selon le zoom
+        async function updateMapLayers() {
+            const zoom = map.getZoom();
+            let resolution = '24x'; // Valeur par défaut pour zoom <= 15
+
+            // Vos règles de paliers de zoom
+            if (zoom >= 17) resolution = '1x';
+            else if (zoom === 16) resolution = '6x';
+
+            // Mise à jour du texte indicateur dans le panneau
+            document.getElementById('zoomInfo').innerHTML = `Zoom actuel : <b>${zoom}</b><br>Fichier actif : <b>${resolution}</b>`;
+
+            const targetLeft = config.AEF[resolution];
+            const targetRight = config.TESSERA[resolution];
+
+            // --- CHARGEMENT SIMULTANÉ DES DEUX FICHIER ---
+            
+            // Partie GAUCHE (AEF)
+            if (!targetLeft.layer) {
+                console.log(`Chargement de : ${targetLeft.file}`);
+                try {
+                    const response = await fetch(targetLeft.file);
+                    if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+                    const data = await response.json();
+                    
+                    targetLeft.layer = L.geoJSON(data, { 
+                        style: styleFeature, 
+                        pane: 'leftPane',
+                        onEachFeature: function (feature, layer) {
+                            layer.options.pane = 'leftPane'; // Sécurité d'injection dans le pane
+                        }
+                    });
+                } catch (e) { console.error(`Erreur AEF (${targetLeft.file}):`, e); }
+            }
+
+            // Partie DROITE (TESSERA)
+            if (!targetRight.layer) {
+                console.log(`Chargement de : ${targetRight.file}`);
+                try {
+                    const response = await fetch(targetRight.file);
+                    if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+                    const data = await response.json();
+                    
+                    targetRight.layer = L.geoJSON(data, { 
+                        style: styleFeature, 
+                        pane: 'rightPane',
+                        onEachFeature: function (feature, layer) {
+                            layer.options.pane = 'rightPane'; // Sécurité d'injection dans le pane
+                        }
+                    });
+                } catch (e) { console.error(`Erreur TESSERA (${targetRight.file}):`, e); }
+            }
+
+            // Rafraîchissement des calques affichés
+            leftLayerGroup.clearLayers();
+            rightLayerGroup.clearLayers();
+
+            if (targetLeft.layer) leftLayerGroup.addLayer(targetLeft.layer);
+            if (targetRight.layer) rightLayerGroup.addLayer(targetRight.layer);
+            
+            // Centrage automatique UNIQUEMENT au premier lancement de l'application
+            if (firstLoad && targetLeft.layer) {
+                if (leftLayerGroup.getLayers().length > 0) {
+                    map.fitBounds(targetLeft.layer.getBounds());
+                    firstLoad = false;
+                }
+            }
+        }
+
+        // Écouteur d'événement sur le zoom de la molette
+        map.on('zoomend', updateMapLayers);
+
+        // 7. LOGIQUE DE GLISSEMENT DU SLIDER (CLIP-PATH)
+        const sliderLine = document.getElementById('slider-line');
+        let isSliding = false;
+
+        function clipPanes(percent) {
+            // Découpe le conteneur gauche de 0% à X%
+            map.getPane('leftPane').style.clipPath = `polygon(0 0, ${percent}% 0, ${percent}% 100%, 0 100%)`;
+            // Découpe le conteneur droit de X% à 100%
+            map.getPane('rightPane').style.clipPath = `polygon(${percent}% 0, 100% 0, 100% 100%, ${percent}% 100%)`;
+            
+            // Aligne la ligne blanche visuelle
+            sliderLine.style.left = `${percent}%`;
+        }
+
+        // Événements d'interaction à la souris
+        sliderLine.addEventListener('mousedown', () => {
+            isSliding = true;
+            map.dragging.disable(); // Bloque la carte pour éviter qu'elle glisse en tirant le slider
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isSliding) {
+                isSliding = false;
+                map.dragging.enable(); // Libère la carte
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isSliding) return;
+            const mapRect = document.getElementById('map').getBoundingClientRect();
+            let percent = ((e.clientX - mapRect.left) / mapRect.width) * 100;
+            
+            // Contrainte entre 0% et 100% de la largeur de l'écran
+            percent = Math.max(0, Math.min(100, percent));
+            clipPanes(percent);
+        });
+
+        // Lancement initial
+        updateMapLayers().then(() => {
+            clipPanes(50); // Positionne le séparateur pile au milieu (50%) au départ
+        });
+    </script>
+</body>
+</html>
