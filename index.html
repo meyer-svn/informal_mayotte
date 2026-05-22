@@ -214,11 +214,14 @@
             <p class="text-[10px] text-on-surface-variant opacity-70 uppercase tracking-tighter">Comparaison de modèle Random Forest basé sur les embeddings de TESSERA et AlphaEarth (AEF)</p>
         </div>
         
-        <!-- Nouveaux boutons de navigation ajoutés -->
         <nav class="flex-1 px-2 space-y-1">
             <button id="btn-comparaison" class="w-full text-left flex items-center gap-3 bg-primary-container text-on-primary-container rounded-sm px-4 py-3 active:opacity-80 transition-all">
                 <span class="material-symbols-outlined">map</span>
-                <span class="font-semibold">Comparaison des modèles</span>
+                <span class="font-semibold">Comparaison (Probabilités)</span>
+            </button>
+            <button id="btn-binaire" class="w-full text-left flex items-center gap-3 hover:bg-surface-container-high text-on-surface rounded-sm px-4 py-3 transition-all">
+                <span class="material-symbols-outlined">contrast</span>
+                <span class="font-semibold">Comparaison (Binaire)</span>
             </button>
             <button id="btn-inondation" class="w-full text-left flex items-center gap-3 hover:bg-surface-container-high text-on-surface rounded-sm px-4 py-3 transition-all">
                 <span class="material-symbols-outlined">flood</span>
@@ -272,6 +275,16 @@
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-none bg-[#BC4749] opacity-70 shadow-sm"></div>
                         <span class="text-sm text-on-surface-variant">High</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="legend-binaire" class="hidden">
+                <h3 class="font-headline font-bold text-primary mb-3">Classification Binaire</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-none bg-[red] opacity-60 shadow-sm"></div>
+                        <span class="text-sm text-on-surface-variant">Habitat informel détecté</span>
                     </div>
                 </div>
             </div>
@@ -332,10 +345,10 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Variables globales pour gérer l'état
-    let currentMode = 'comparaison'; // Modes possibles : 'comparaison', 'inondation', 'glissement'
+    let currentMode = 'comparaison'; // 'comparaison', 'binaire', 'inondation', 'glissement'
     let layerInondation = null;
     let layerGlissement = null;
+    let binaryLoaded = false;
 
     const map = L.map('map', {
         zoomControl: false,
@@ -365,9 +378,10 @@
     map.createPane('rightPane');
     map.createPane('riskPane'); 
 
+    // MODIFICATION ICI : Le riskPane est mis à 350 pour s'afficher derrière les panes gauche/droite qui sont à 400
     map.getPane('leftPane').style.zIndex  = 400;
     map.getPane('rightPane').style.zIndex = 400;
-    map.getPane('riskPane').style.zIndex  = 450; 
+    map.getPane('riskPane').style.zIndex  = 350; 
 
     function styleFeature(feature) {
         const val = feature.properties.valeur_pixel;
@@ -376,6 +390,16 @@
         if (val === 2) polygonColor = '#F5F5DC';
         if (val === 3) polygonColor = '#BC4749';
         return { fillColor: polygonColor, weight: 0, fillOpacity: 0.55 };
+    }
+
+    function styleBinaryFeature(feature) {
+        const val = feature.properties.valeur_pixel;
+        if (val === 1) {
+            return { fillColor: 'red', weight: 0, fillOpacity: 0.6 };
+        } else if (val === 2) {
+            return { fillColor: 'transparent', weight: 0, fillOpacity: 0 };
+        }
+        return { fillColor: 'transparent', weight: 0, fillOpacity: 0 };
     }
 
     function styleInondation(feature) {
@@ -396,46 +420,51 @@
         return { fillColor: color, weight: 0, fillOpacity: 0.7 };
     }
 
-    // Fonction centralisée de synchronisation des légendes
     function syncLegends() {
         const legendBase = document.getElementById('legend-base');
+        const legendBinaire = document.getElementById('legend-binaire');
         const legendInon = document.getElementById('legend-inondation');
         const legendGlis = document.getElementById('legend-glissement');
 
+        legendInon.className = 'hidden';
+        legendGlis.className = 'hidden';
+
         if (currentMode === 'comparaison') {
             legendBase.classList.remove('hidden');
+            legendBinaire.classList.add('hidden');
             
-            // Si la map contient l'inondation en mode comparaison, on ajoute les styles d'espacement
             if (layerInondation && map.hasLayer(layerInondation)) {
-                legendInon.classList.remove('hidden');
-                legendInon.classList.add('mt-4', 'pt-4', 'border-t', 'border-outline-variant/20');
-            } else {
-                legendInon.classList.add('hidden');
+                legendInon.className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
             }
-            
             if (layerGlissement && map.hasLayer(layerGlissement)) {
-                legendGlis.classList.remove('hidden');
-                legendGlis.classList.add('mt-4', 'pt-4', 'border-t', 'border-outline-variant/20');
-            } else {
-                legendGlis.classList.add('hidden');
+                legendGlis.className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
             }
         } 
+        else if (currentMode === 'binaire') {
+            legendBase.classList.add('hidden');
+            legendBinaire.classList.remove('hidden');
+
+            if (layerInondation && map.hasLayer(layerInondation)) {
+                legendInon.className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
+            }
+            if (layerGlissement && map.hasLayer(layerGlissement)) {
+                legendGlis.className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
+            }
+        }
         else if (currentMode === 'inondation') {
             legendBase.classList.add('hidden');
-            // Retrait des bordures car la légende est affichée seule
-            legendInon.classList.remove('hidden', 'mt-4', 'pt-4', 'border-t', 'border-outline-variant/20');
-            legendGlis.classList.add('hidden');
+            legendBinaire.classList.add('hidden');
+            legendInon.className = 'block'; 
         } 
         else if (currentMode === 'glissement') {
             legendBase.classList.add('hidden');
-            legendInon.classList.add('hidden');
-            legendGlis.classList.remove('hidden', 'mt-4', 'pt-4', 'border-t', 'border-outline-variant/20');
+            legendBinaire.classList.add('hidden');
+            legendGlis.className = 'block';
         }
     }
 
     map.on('overlayadd overlayremove', syncLegends);
 
-    // Chargement dynamique
     fetch('l_zone_alea_inondation_debordement_s_976.json')
         .then(res => res.json())
         .then(data => {
@@ -470,6 +499,9 @@
 
     let leftLayerGroup  = L.layerGroup().addTo(map);
     let rightLayerGroup = L.layerGroup().addTo(map);
+    
+    let leftBinaryGroup = L.layerGroup();
+    let rightBinaryGroup = L.layerGroup();
     let firstLoad = true;
 
     async function loadLayer(target, paneName) {
@@ -487,6 +519,28 @@
         return target.layer;
     }
 
+    async function loadBinaryLayers() {
+        if (binaryLoaded) return;
+        try {
+            const [resAef, resTessera] = await Promise.all([
+                fetch('AEF_binaire.json'),
+                fetch('TESSERA_binaire.json')
+            ]);
+            
+            if (resAef.ok && resTessera.ok) {
+                const dataAef = await resAef.json();
+                const dataTessera = await resTessera.json();
+
+                L.geoJSON(dataAef, { style: styleBinaryFeature, pane: 'leftPane' }).addTo(leftBinaryGroup);
+                L.geoJSON(dataTessera, { style: styleBinaryFeature, pane: 'rightPane' }).addTo(rightBinaryGroup);
+                
+                binaryLoaded = true;
+            }
+        } catch (e) {
+            console.warn("Erreur lors du chargement des fichiers binaires:", e);
+        }
+    }
+
     function updateZoomText() {
         const zoom = map.getZoom();
         let resolution = '24x';
@@ -495,7 +549,9 @@
 
         let textInfo = `Zoom actuel : <b>${zoom}</b><br>`;
         if (currentMode === 'comparaison') {
-            textInfo += `Fichier actif : <b>${resolution}</b>`;
+            textInfo += `Fichier actif : <b>Probabilités (${resolution})</b>`;
+        } else if (currentMode === 'binaire') {
+            textInfo += `Fichier actif : <b>Classification Binaire</b>`;
         } else if (currentMode === 'inondation') {
             textInfo += `Fichier actif : <b>Inondation</b>`;
         } else if (currentMode === 'glissement') {
@@ -530,7 +586,6 @@
         applyClip();
     }
 
-    // Gestion des modes ("Comparaison", "Inondation", "Glissement")
     function setMode(mode) {
         currentMode = mode;
         
@@ -539,11 +594,11 @@
         
         const btns = {
             'comparaison': document.getElementById('btn-comparaison'),
+            'binaire': document.getElementById('btn-binaire'),
             'inondation': document.getElementById('btn-inondation'),
             'glissement': document.getElementById('btn-glissement')
         };
         
-        // Mettre à jour les couleurs des boutons
         for (const [key, btn] of Object.entries(btns)) {
             if (key === mode) {
                 btn.classList.remove(...inactiveClass);
@@ -554,39 +609,41 @@
             }
         }
         
-        // Afficher/Masquer les UI liées aux modèles
-        document.getElementById('slider-line').style.display = mode === 'comparaison' ? 'block' : 'none';
-        document.getElementById('label-aef').style.display = mode === 'comparaison' ? 'block' : 'none';
-        document.getElementById('label-tessera').style.display = mode === 'comparaison' ? 'block' : 'none';
+        const usesSlider = (mode === 'comparaison' || mode === 'binaire');
+        document.getElementById('slider-line').style.display = usesSlider ? 'block' : 'none';
+        document.getElementById('label-aef').style.display = usesSlider ? 'block' : 'none';
+        document.getElementById('label-tessera').style.display = usesSlider ? 'block' : 'none';
         
-        // Gestion des affichages de Layers
+        map.removeLayer(leftLayerGroup);
+        map.removeLayer(rightLayerGroup);
+        map.removeLayer(leftBinaryGroup);
+        map.removeLayer(rightBinaryGroup);
+        if (layerInondation && map.hasLayer(layerInondation)) map.removeLayer(layerInondation);
+        if (layerGlissement && map.hasLayer(layerGlissement)) map.removeLayer(layerGlissement);
+        
         if (mode === 'comparaison') {
             map.addLayer(leftLayerGroup);
             map.addLayer(rightLayerGroup);
-            if (layerInondation && map.hasLayer(layerInondation)) map.removeLayer(layerInondation);
-            if (layerGlissement && map.hasLayer(layerGlissement)) map.removeLayer(layerGlissement);
+        } else if (mode === 'binaire') {
+            map.addLayer(leftBinaryGroup);
+            map.addLayer(rightBinaryGroup);
+            loadBinaryLayers(); 
         } else if (mode === 'inondation') {
-            map.removeLayer(leftLayerGroup);
-            map.removeLayer(rightLayerGroup);
-            if (layerGlissement && map.hasLayer(layerGlissement)) map.removeLayer(layerGlissement);
-            if (layerInondation && !map.hasLayer(layerInondation)) map.addLayer(layerInondation);
+            if (layerInondation) map.addLayer(layerInondation);
         } else if (mode === 'glissement') {
-            map.removeLayer(leftLayerGroup);
-            map.removeLayer(rightLayerGroup);
-            if (layerInondation && map.hasLayer(layerInondation)) map.removeLayer(layerInondation);
-            if (layerGlissement && !map.hasLayer(layerGlissement)) map.addLayer(layerGlissement);
+            if (layerGlissement) map.addLayer(layerGlissement);
         }
         
         updateZoomText();
         syncLegends();
+        applyClip();
     }
 
-    // Attacher les écouteurs sur les nouveaux boutons
     document.getElementById('btn-comparaison').addEventListener('click', () => setMode('comparaison'));
+    document.getElementById('btn-binaire').addEventListener('click', () => setMode('binaire'));
     document.getElementById('btn-inondation').addEventListener('click', () => setMode('inondation'));
     document.getElementById('btn-glissement').addEventListener('click', () => setMode('glissement'));
 
-    // Clipping du slider
     const BIG = 99999; 
     let currentPercent = 50;
     const sliderLine = document.getElementById('slider-line');
@@ -638,7 +695,6 @@
         applyClip();
     });
 
-    // Share / Export UI
     const toast        = document.getElementById('toast');
     const toastMessage = document.getElementById('toast-message');
 
@@ -696,7 +752,6 @@
         }
     });
 
-    // Initialisation
     applyClip();         
     updateMapLayers();   
 </script>
