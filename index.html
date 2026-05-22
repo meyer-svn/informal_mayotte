@@ -395,7 +395,7 @@
     function styleBinaryFeature(feature) {
         const val = feature.properties.valeur_pixel;
         if (val === 1) {
-            return { fillColor: '#59A64E' , weight: 0, fillOpacity: 0.6 };
+            return { fillColor: '#B427F5' , weight: 0, fillOpacity: 0.65 };
         } else if (val === 2) {
             return { fillColor: 'transparent', weight: 0, fillOpacity: 0 };
         }
@@ -408,7 +408,7 @@
         if (niveau === 'faible') color = '#93c5fd'; 
         else if (niveau === 'moyen') color = '#3b82f6'; 
         else if (niveau === 'fort') color = '#1e3a8a'; 
-        return { fillColor: color, weight: 0, fillOpacity: 0.7 };
+        return { fillColor: color, weight: 0, fillOpacity: 0.65 };
     }
 
     function styleGlissement(feature) {
@@ -417,7 +417,7 @@
         if (niveau === 'faible') color = '#fde047'; 
         else if (niveau === 'moyen') color = '#f97316'; 
         else if (niveau === 'fort') color = '#dc2626'; 
-        return { fillColor: color, weight: 0, fillOpacity: 0.7 };
+        return { fillColor: color, weight: 0, fillOpacity: 0.6 };
     }
 
     function syncLegends() {
