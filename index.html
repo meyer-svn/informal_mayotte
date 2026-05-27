@@ -203,13 +203,44 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+
+    /* Legend matrix table */
+    .legend-matrix {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 10px;
+    }
+    .legend-matrix th, .legend-matrix td {
+        border: 1px solid rgba(119,120,110,0.25);
+        padding: 4px 5px;
+        text-align: center;
+        line-height: 1.3;
+    }
+    .legend-matrix th {
+        background: rgba(240,237,232,0.6);
+        font-weight: 600;
+        font-size: 9px;
+        color: #46473f;
+    }
+    .legend-matrix td {
+        font-size: 9px;
+        font-weight: 500;
+    }
+    .legend-swatch {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 4px;
+        vertical-align: middle;
+        flex-shrink: 0;
+    }
 </style>
 </head>
 <body class="bg-background text-on-surface" style="cursor: default;">
 <div class="flex h-screen overflow-hidden">
     <aside class="w-64 h-full bg-surface-container border-r border-outline-variant/20 flex flex-col py-4 z-40 relative">
         <div class="px-6 mb-6">
-            <h1 class="text-xl font-headline font-bold text-primary mb-1">Mayotte (Mamoudzou, Koungou)</h1>
+            <h1 class="text-xl font-headline font-bold text-primary mb-1">Mayotte <br>(Mamoudzou, Koungou)</h1>
             <h2 class="text-sm font-headline font-semibold text-primary/80">Cartographie automatique de l'habitat informel</h2>
             <p class="text-[10px] text-on-surface-variant opacity-70 uppercase tracking-tighter">Comparaison de modèle Random Forest basé sur les embeddings de TESSERA et AlphaEarth (AEF)</p>
         </div>
@@ -222,6 +253,10 @@
             <button id="btn-binaire" class="w-full text-left flex items-center gap-3 hover:bg-surface-container-high text-on-surface rounded-sm px-4 py-3 transition-all">
                 <span class="material-symbols-outlined">contrast</span>
                 <span class="font-semibold">Comparaison (Binaire)</span>
+            </button>
+            <button id="btn-risque" class="w-full text-left flex items-center gap-3 hover:bg-surface-container-high text-on-surface rounded-sm px-4 py-3 transition-all">
+                <span class="material-symbols-outlined">crisis_alert</span>
+                <span class="font-semibold">Typologie informalité/risques</span>
             </button>
             <button id="btn-inondation" class="w-full text-left flex items-center gap-3 hover:bg-surface-container-high text-on-surface rounded-sm px-4 py-3 transition-all">
                 <span class="material-symbols-outlined">flood</span>
@@ -255,42 +290,96 @@
 
         <div id="slider-line">
             <div class="bg-surface-bright" id="slider-thumb">
-                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;">unfold_more</span>
+                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24; transform: rotate(90deg); display: inline-block;">unfold_more</span>
             </div>
         </div>
 
+        <!-- Legend panel -->
         <div class="absolute bottom-6 right-6 z-[1000] w-72 bg-surface-bright/95 backdrop-blur-md p-5 rounded-sm shadow-xl border border-outline-variant/10 pointer-events-auto max-h-[85vh] overflow-y-auto">
             
+            <!-- Probabilités legend -->
             <div id="legend-base">
-                <h3 class="font-headline font-bold text-primary mb-3">Informal settlement probability</h3>
+                <div class="flex items-center gap-2 mb-3">
+                    <h3 class="font-headline font-bold text-primary">Probabilité d'habitat informel (PHI)</h3>
+                    <div class="relative flex-shrink-0">
+                        <span id="phi-info-icon" class="flex items-center justify-center w-4 h-4 rounded-full border border-outline text-[10px] font-bold text-on-surface-variant cursor-default select-none leading-none">i</span>
+                    </div>
+                </div>
                 <div class="space-y-3">
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-none bg-[#4FB0C6] opacity-70 shadow-sm"></div>
-                        <span class="text-sm text-on-surface-variant">Low</span>
+                        <span class="text-sm text-on-surface-variant">Faible</span>
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-none bg-[#F5F5DC] opacity-70 shadow-sm border border-outline/20"></div>
-                        <span class="text-sm text-on-surface-variant">Medium</span>
+                        <span class="text-sm text-on-surface-variant">Moyenne</span>
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-none bg-[#BC4749] opacity-70 shadow-sm"></div>
-                        <span class="text-sm text-on-surface-variant">High</span>
+                        <span class="text-sm text-on-surface-variant">Elevée</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Binaire legend — probabilité élevée uniquement -->
             <div id="legend-binaire" class="hidden">
-                <h3 class="font-headline font-bold text-primary mb-3">Classification Binaire</h3>
+                <h3 class="font-headline font-bold text-primary mb-3">Probabilité élevée uniquement</h3>
                 <div class="space-y-3">
                     <div class="flex items-center gap-3">
-                        <div class="w-3 h-3 rounded-none bg-[red] opacity-60 shadow-sm"></div>
-                        <span class="text-sm text-on-surface-variant">Habitat informel détecté</span>
+                        <div class="w-3 h-3 rounded-none bg-[#FF69B4] opacity-85 shadow-sm"></div>
+                        <span class="text-sm text-on-surface-variant">Elevee</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Risque Composite legend -->
+            <div id="legend-risque" class="hidden">
+                <h3 class="font-headline font-bold text-primary mb-3">🔴 Typologie informalité/risques</h3>
+                <p class="text-[10px] text-on-surface-variant mb-2 leading-snug">Croisement probabilité d'habitat informel (PHI) × exposition aux risques d'inondation et de glissement de terrain</p>
+                <table class="legend-matrix">
+                    <thead>
+                        <tr>
+                            <th class="text-left"></th>
+                            <th>Aucun risque</th>
+                            <th>1 des 2 risques</th>
+                            <th>Les 2 risques</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-left font-semibold text-[9px] whitespace-nowrap">PHI élevée</td>
+                            <td style="background:rgba(255,215,0,0.25);">
+                                <span class="legend-swatch" style="background:#FFD700;"></span>
+                            </td>
+                            <td style="background:rgba(255,107,107,0.2);">
+                                <span class="legend-swatch" style="background:#FF6B6B;"></span>
+                            </td>
+                            <td style="background:rgba(139,0,0,0.2);">
+                                <span class="legend-swatch" style="background:#8B0000;"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-left font-semibold text-[9px] whitespace-nowrap">PHI faible/moy.</td>
+                            <td style="background:rgba(191,219,254,0.35);">
+                                <span class="legend-swatch" style="background:#BFDBFE;"></span>
+                            </td>
+                            <td style="background:rgba(59,130,246,0.2);">
+                                <span class="legend-swatch" style="background:#3B82F6;"></span>
+                            </td>
+                            <td style="background:rgba(30,58,138,0.2);">
+                                <span class="legend-swatch" style="background:#1E3A8A;"></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Inondation legend -->
             <div id="legend-inondation" class="hidden">
-                <h3 class="font-headline font-bold text-primary mb-3">🌊 Risque Inondation</h3>
+                <div class="flex items-center gap-2 mb-3">
+                    <h3 class="font-headline font-bold text-primary">🌊 Risque Inondation</h3>
+                    <span id="inondation-info-icon" class="flex items-center justify-center w-4 h-4 rounded-full border border-outline text-[10px] font-bold text-on-surface-variant cursor-default select-none leading-none flex-shrink-0">i</span>
+                </div>
                 <div class="space-y-3">
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-none bg-[#93c5fd] opacity-70 shadow-sm"></div>
@@ -307,8 +396,12 @@
                 </div>
             </div>
 
+            <!-- Glissement legend -->
             <div id="legend-glissement" class="hidden">
-                <h3 class="font-headline font-bold text-primary mb-3">⛰️ Risque Glissement</h3>
+                <div class="flex items-center gap-2 mb-3">
+                    <h3 class="font-headline font-bold text-primary">⛰️ Risque Glissement</h3>
+                    <span id="glissement-info-icon" class="flex items-center justify-center w-4 h-4 rounded-full border border-outline text-[10px] font-bold text-on-surface-variant cursor-default select-none leading-none flex-shrink-0">i</span>
+                </div>
                 <div class="space-y-3">
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-none bg-[#fde047] opacity-70 shadow-sm"></div>
@@ -330,6 +423,7 @@
             </div>
         </div>
 
+        <!-- Model labels (shown on slider modes) -->
         <div id="label-aef" class="absolute left-6 z-[1000] pointer-events-none top-16">
             <div class="px-4 py-2 backdrop-blur-md rounded-lg font-bold font-headline drop-shadow-md bg-white/80 border border-white/20" style="color: rgb(66, 133, 244);">AEF</div>
         </div>
@@ -343,13 +437,82 @@
     </main>
 </div>
 
+<!-- ── Tooltips ─────────────────────────────────────────────────────────────── -->
+
+<!-- PHI tooltip -->
+<div id="phi-tooltip" style="
+    position: fixed;
+    z-index: 9999;
+    width: 260px;
+    background: #31302d;
+    color: #f3f0eb;
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    line-height: 1.55;
+    border-radius: 2px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    display: none;
+">
+    Les seuils ont été calculés de manière indépendante pour chaque raster en utilisant les tertiles (33% et 66%) de leur propre distribution de fréquences, permettant ainsi de découper les pixels valides de chaque image en trois classes (basse, moyenne et haute probabilité) adaptées à la dynamique de leurs données respectives. L'agrégation des pixels lors du dézoom se fait par moyenne.
+</div>
+
+<!-- Inondation tooltip -->
+<div id="inondation-tooltip" style="
+    position: fixed;
+    z-index: 9999;
+    width: 260px;
+    background: #31302d;
+    color: #f3f0eb;
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    line-height: 1.55;
+    border-radius: 2px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    display: none;
+">
+    Une inondation est une submersion, rapide ou lente, d'une zone habituellement hors d'eau, ici c'est la rivière qui déborde de son lit mineur pour inonder les surfaces alentours.<br><br>
+    Source : Observatoire de Mayotte, <a href="https://catalogue.observatoire-de-mayotte.fr/geonetwork/srv/fre/catalog.search#/metadata/8746ee2c-c0fa-4dce-9251-6cc3b859e59e" target="_blank" rel="noopener" style="color: #c3caa9; text-decoration: underline;">catalogue.observatoire-de-mayotte.fr</a>
+</div>
+
+<!-- Glissement tooltip -->
+<div id="glissement-tooltip" style="
+    position: fixed;
+    z-index: 9999;
+    width: 260px;
+    background: #31302d;
+    color: #f3f0eb;
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    line-height: 1.55;
+    border-radius: 2px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    display: none;
+">
+    Le glissement de terrain est un des deux types de mouvements de terrain considérés et cartographiés à Mayotte. Il s'agit d'un mouvement gravitaire d'un volume de sol meuble sur une pente et pouvant mobiliser quelques m³ à plusieurs centaines de milliers de m³. Ces phénomènes peuvent être rapides ou lents, les terrassements, la présence d'eau et les séismes peuvent être des éléments déclencheurs de ces glissements.<br><br>
+    Source : Observatoire de Mayotte, <a href="https://catalogue.observatoire-de-mayotte.fr/geonetwork/srv/fre/catalog.search#/metadata/1bece833-d7ed-47de-96ba-78f88269ec45" target="_blank" rel="noopener" style="color: #c3caa9; text-decoration: underline;">catalogue.observatoire-de-mayotte.fr</a>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    let currentMode = 'comparaison'; // 'comparaison', 'binaire', 'inondation', 'glissement'
+    // ── State ──────────────────────────────────────────────────────────────────
+    let currentMode = 'comparaison'; // 'comparaison' | 'binaire' | 'risque' | 'inondation' | 'glissement'
     let layerInondation = null;
     let layerGlissement = null;
-    let binaryLoaded = false;
+    let risqueLoaded    = false;
 
+    // ── Map setup ──────────────────────────────────────────────────────────────
     const map = L.map('map', {
         zoomControl: false,
         minZoom: 2,
@@ -374,15 +537,16 @@
         "OpenStreetMap": osmLayer
     }, {}, { position: 'topright' }).addTo(map);
 
+    // ── Panes ──────────────────────────────────────────────────────────────────
     map.createPane('leftPane');
     map.createPane('rightPane');
-    map.createPane('riskPane'); 
+    map.createPane('riskPane');
 
-    // MODIFICATION ICI : Le riskPane est mis à 350 pour s'afficher derrière les panes gauche/droite qui sont à 400
     map.getPane('leftPane').style.zIndex  = 400;
     map.getPane('rightPane').style.zIndex = 400;
-    map.getPane('riskPane').style.zIndex  = 350; 
+    map.getPane('riskPane').style.zIndex  = 350;
 
+    // ── Style functions ────────────────────────────────────────────────────────
     function styleFeature(feature) {
         const val = feature.properties.valeur_pixel;
         let polygonColor = 'gray';
@@ -394,77 +558,75 @@
 
     function styleBinaryFeature(feature) {
         const val = feature.properties.valeur_pixel;
-        if (val === 1) {
-            return { fillColor: '#B427F5' , weight: 0, fillOpacity: 0.65 };
-        } else if (val === 2) {
-            return { fillColor: 'transparent', weight: 0, fillOpacity: 0 };
+        if (val === 3) {
+            return { fillColor: '#FF69B4', weight: 0, fillOpacity: 0.85 };
         }
         return { fillColor: 'transparent', weight: 0, fillOpacity: 0 };
     }
 
+    function styleRisqueFeature(feature) {
+        const val = feature.properties.valeur_pixel;
+        const colorMap = {
+            1: '#8B0000',
+            2: '#FF6B6B',
+            3: '#FF6B6B',
+            4: '#FFD700',
+            5: '#1E3A8A',
+            6: '#3B82F6',
+            7: '#3B82F6',
+            8: '#BFDBFE'
+        };
+        const color = colorMap[val] || 'transparent';
+        return { fillColor: color, weight: 0, fillOpacity: color === 'transparent' ? 0 : 0.75 };
+    }
+
     function styleInondation(feature) {
         let niveau = String(feature.properties.lb_niveau || '').toLowerCase().trim();
-        let color = '#3b82f6'; 
-        if (niveau === 'faible') color = '#93c5fd'; 
-        else if (niveau === 'moyen') color = '#3b82f6'; 
-        else if (niveau === 'fort') color = '#1e3a8a'; 
+        let color = '#3b82f6';
+        if (niveau === 'faible') color = '#93c5fd';
+        else if (niveau === 'moyen') color = '#3b82f6';
+        else if (niveau === 'fort')  color = '#1e3a8a';
         return { fillColor: color, weight: 0, fillOpacity: 0.65 };
     }
 
     function styleGlissement(feature) {
         let niveau = String(feature.properties.lb_niveau || '').toLowerCase().trim();
-        let color = '#f97316'; 
-        if (niveau === 'faible') color = '#fde047'; 
-        else if (niveau === 'moyen') color = '#f97316'; 
-        else if (niveau === 'fort') color = '#dc2626'; 
+        let color = '#f97316';
+        if (niveau === 'faible') color = '#fde047';
+        else if (niveau === 'moyen') color = '#f97316';
+        else if (niveau === 'fort')  color = '#dc2626';
         return { fillColor: color, weight: 0, fillOpacity: 0.6 };
     }
 
+    // ── Legend sync ────────────────────────────────────────────────────────────
     function syncLegends() {
-        const legendBase = document.getElementById('legend-base');
-        const legendBinaire = document.getElementById('legend-binaire');
-        const legendInon = document.getElementById('legend-inondation');
-        const legendGlis = document.getElementById('legend-glissement');
-
-        legendInon.className = 'hidden';
-        legendGlis.className = 'hidden';
+        const ids = ['legend-base', 'legend-binaire', 'legend-risque', 'legend-inondation', 'legend-glissement'];
+        ids.forEach(id => document.getElementById(id).classList.add('hidden'));
 
         if (currentMode === 'comparaison') {
-            legendBase.classList.remove('hidden');
-            legendBinaire.classList.add('hidden');
-            
-            if (layerInondation && map.hasLayer(layerInondation)) {
-                legendInon.className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
-            }
-            if (layerGlissement && map.hasLayer(layerGlissement)) {
-                legendGlis.className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
-            }
-        } 
-        else if (currentMode === 'binaire') {
-            legendBase.classList.add('hidden');
-            legendBinaire.classList.remove('hidden');
-
-            if (layerInondation && map.hasLayer(layerInondation)) {
-                legendInon.className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
-            }
-            if (layerGlissement && map.hasLayer(layerGlissement)) {
-                legendGlis.className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
-            }
-        }
-        else if (currentMode === 'inondation') {
-            legendBase.classList.add('hidden');
-            legendBinaire.classList.add('hidden');
-            legendInon.className = 'block'; 
-        } 
-        else if (currentMode === 'glissement') {
-            legendBase.classList.add('hidden');
-            legendBinaire.classList.add('hidden');
-            legendGlis.className = 'block';
+            document.getElementById('legend-base').classList.remove('hidden');
+            if (layerInondation && map.hasLayer(layerInondation))
+                document.getElementById('legend-inondation').className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
+            if (layerGlissement && map.hasLayer(layerGlissement))
+                document.getElementById('legend-glissement').className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
+        } else if (currentMode === 'binaire') {
+            document.getElementById('legend-binaire').classList.remove('hidden');
+            if (layerInondation && map.hasLayer(layerInondation))
+                document.getElementById('legend-inondation').className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
+            if (layerGlissement && map.hasLayer(layerGlissement))
+                document.getElementById('legend-glissement').className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
+        } else if (currentMode === 'risque') {
+            document.getElementById('legend-risque').classList.remove('hidden');
+        } else if (currentMode === 'inondation') {
+            document.getElementById('legend-inondation').classList.remove('hidden');
+        } else if (currentMode === 'glissement') {
+            document.getElementById('legend-glissement').classList.remove('hidden');
         }
     }
 
     map.on('overlayadd overlayremove', syncLegends);
 
+    // ── Risk / natural hazard layers ───────────────────────────────────────────
     fetch('l_zone_alea_inondation_debordement_s_976.json')
         .then(res => res.json())
         .then(data => {
@@ -483,8 +645,21 @@
         })
         .catch(err => console.warn("Fichier glissement introuvable :", err));
 
-
+    // ── Probability layers config ──────────────────────────────────────────────
     const config = {
+        AEF: {
+            '1x':  { file: 'AEF_masked.geojson',     layer: null },
+            '6x':  { file: 'AEF_masked_6x.geojson',  layer: null },
+            '24x': { file: 'AEF_masked_24x.geojson', layer: null }
+        },
+        TESSERA: {
+            '1x':  { file: 'TESSERA_masked.geojson',     layer: null },
+            '6x':  { file: 'TESSERA_masked_6x.geojson',  layer: null },
+            '24x': { file: 'TESSERA_masked_24x.geojson', layer: null }
+        }
+    };
+
+    const configBinary = {
         AEF: {
             '1x':  { file: 'AEF_masked.geojson',     layer: null },
             '6x':  { file: 'AEF_masked_6x.geojson',  layer: null },
@@ -499,11 +674,15 @@
 
     let leftLayerGroup  = L.layerGroup().addTo(map);
     let rightLayerGroup = L.layerGroup().addTo(map);
-    
-    let leftBinaryGroup = L.layerGroup();
+    let leftBinaryGroup  = L.layerGroup();
     let rightBinaryGroup = L.layerGroup();
+
+    let leftRisqueGroup  = L.layerGroup();
+    let rightRisqueGroup = L.layerGroup();
+
     let firstLoad = true;
 
+    // ── Layer loading helpers ──────────────────────────────────────────────────
     async function loadLayer(target, paneName) {
         if (!target.layer) {
             try {
@@ -519,45 +698,61 @@
         return target.layer;
     }
 
-    async function loadBinaryLayers() {
-        if (binaryLoaded) return;
+    async function loadBinaryLayer(target, paneName) {
+        if (!target.layer) {
+            try {
+                const response = await fetch(target.file);
+                if (response.ok) {
+                    const data = await response.json();
+                    target.layer = L.geoJSON(data, { style: styleBinaryFeature, pane: paneName });
+                }
+            } catch (e) {
+                console.warn(`Binary layer ${target.file} could not be loaded.`, e);
+            }
+        }
+        return target.layer;
+    }
+
+    async function loadRisqueLayers() {
+        if (risqueLoaded) return;
+        showToast("Chargement des couches risque composite…");
         try {
             const [resAef, resTessera] = await Promise.all([
-                fetch('AEF_binaire.json'),
-                fetch('TESSERA_binaire.json')
+                fetch('risque_AE.json'),
+                fetch('risque_TESS.json')
             ]);
-            
             if (resAef.ok && resTessera.ok) {
-                const dataAef = await resAef.json();
+                const dataAef     = await resAef.json();
                 const dataTessera = await resTessera.json();
-
-                L.geoJSON(dataAef, { style: styleBinaryFeature, pane: 'leftPane' }).addTo(leftBinaryGroup);
-                L.geoJSON(dataTessera, { style: styleBinaryFeature, pane: 'rightPane' }).addTo(rightBinaryGroup);
-                
-                binaryLoaded = true;
+                L.geoJSON(dataAef,     { style: styleRisqueFeature, pane: 'leftPane'  }).addTo(leftRisqueGroup);
+                L.geoJSON(dataTessera, { style: styleRisqueFeature, pane: 'rightPane' }).addTo(rightRisqueGroup);
+                risqueLoaded = true;
+                const bounds = leftRisqueGroup.getBounds();
+                if (bounds && bounds.isValid()) map.fitBounds(bounds);
+                showToast("Couches risque composite chargées !");
+            } else {
+                showToast("Fichiers risque_AE.json / risque_TESS.json introuvables.");
             }
         } catch (e) {
-            console.warn("Erreur lors du chargement des fichiers binaires:", e);
+            console.warn("Erreur chargement risque composite:", e);
+            showToast("Erreur chargement risque composite.");
         }
     }
 
+    // ── Zoom & update ──────────────────────────────────────────────────────────
     function updateZoomText() {
         const zoom = map.getZoom();
         let resolution = '24x';
-        if (zoom >= 17)    resolution = '1x';
+        if (zoom >= 17)   resolution = '1x';
         else if (zoom === 16) resolution = '6x';
 
         let textInfo = `Zoom actuel : <b>${zoom}</b><br>`;
-        if (currentMode === 'comparaison') {
-            textInfo += `Fichier actif : <b>Probabilités (${resolution})</b>`;
-        } else if (currentMode === 'binaire') {
-            textInfo += `Fichier actif : <b>Classification Binaire</b>`;
-        } else if (currentMode === 'inondation') {
-            textInfo += `Fichier actif : <b>Inondation</b>`;
-        } else if (currentMode === 'glissement') {
-            textInfo += `Fichier actif : <b>Glissement</b>`;
-        }
-        
+        if      (currentMode === 'comparaison') textInfo += `Fichier actif : <b>Probabilités (${resolution})</b>`;
+        else if (currentMode === 'binaire')     textInfo += `Fichier actif : <b>Probabilité élevée (${resolution})</b>`;
+        else if (currentMode === 'risque')      textInfo += `Fichier actif : <b>Typologie informalité/risques</b>`;
+        else if (currentMode === 'inondation')  textInfo += `Fichier actif : <b>Inondation</b>`;
+        else if (currentMode === 'glissement')  textInfo += `Fichier actif : <b>Glissement</b>`;
+
         document.getElementById('zoomInfo').innerHTML = textInfo;
         return resolution;
     }
@@ -565,40 +760,61 @@
     async function updateMapLayers() {
         const resolution = updateZoomText();
 
-        const [leftL, rightL] = await Promise.all([
-            loadLayer(config.AEF[resolution],    'leftPane'),
-            loadLayer(config.TESSERA[resolution], 'rightPane')
-        ]);
+        if (currentMode === 'comparaison') {
+            const [leftL, rightL] = await Promise.all([
+                loadLayer(config.AEF[resolution],    'leftPane'),
+                loadLayer(config.TESSERA[resolution], 'rightPane')
+            ]);
+            leftLayerGroup.clearLayers();
+            rightLayerGroup.clearLayers();
+            if (leftL)  leftLayerGroup.addLayer(leftL);
+            if (rightL) rightLayerGroup.addLayer(rightL);
 
-        leftLayerGroup.clearLayers();
-        rightLayerGroup.clearLayers();
-        if (leftL)  leftLayerGroup.addLayer(leftL);
-        if (rightL) rightLayerGroup.addLayer(rightL);
+            if (firstLoad && leftL) {
+                const bounds = leftL.getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds);
+                    firstLoad = false;
+                }
+            }
 
-        if (firstLoad && leftL) {
-            const bounds = leftL.getBounds();
-            if (bounds.isValid()) {
-                map.fitBounds(bounds);
-                firstLoad = false;
+        } else if (currentMode === 'binaire') {
+            const [leftL, rightL] = await Promise.all([
+                loadBinaryLayer(configBinary.AEF[resolution],    'leftPane'),
+                loadBinaryLayer(configBinary.TESSERA[resolution], 'rightPane')
+            ]);
+            leftBinaryGroup.clearLayers();
+            rightBinaryGroup.clearLayers();
+            if (leftL)  leftBinaryGroup.addLayer(leftL);
+            if (rightL) rightBinaryGroup.addLayer(rightL);
+
+            if (firstLoad && leftL) {
+                const bounds = leftL.getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds);
+                    firstLoad = false;
+                }
             }
         }
 
         applyClip();
     }
 
+    // ── Mode switching ─────────────────────────────────────────────────────────
     function setMode(mode) {
         currentMode = mode;
-        
-        const activeClass = ["bg-primary-container", "text-on-primary-container", "active:opacity-80"];
+
+        const activeClass   = ["bg-primary-container", "text-on-primary-container", "active:opacity-80"];
         const inactiveClass = ["hover:bg-surface-container-high", "text-on-surface"];
-        
+
         const btns = {
             'comparaison': document.getElementById('btn-comparaison'),
-            'binaire': document.getElementById('btn-binaire'),
-            'inondation': document.getElementById('btn-inondation'),
-            'glissement': document.getElementById('btn-glissement')
+            'binaire':     document.getElementById('btn-binaire'),
+            'risque':      document.getElementById('btn-risque'),
+            'inondation':  document.getElementById('btn-inondation'),
+            'glissement':  document.getElementById('btn-glissement')
         };
-        
+
         for (const [key, btn] of Object.entries(btns)) {
             if (key === mode) {
                 btn.classList.remove(...inactiveClass);
@@ -608,62 +824,67 @@
                 btn.classList.add(...inactiveClass);
             }
         }
-        
-        const usesSlider = (mode === 'comparaison' || mode === 'binaire');
-        document.getElementById('slider-line').style.display = usesSlider ? 'block' : 'none';
-        document.getElementById('label-aef').style.display = usesSlider ? 'block' : 'none';
+
+        const usesSlider = (mode === 'comparaison' || mode === 'binaire' || mode === 'risque');
+        document.getElementById('slider-line').style.display   = usesSlider ? 'block' : 'none';
+        document.getElementById('label-aef').style.display     = usesSlider ? 'block' : 'none';
         document.getElementById('label-tessera').style.display = usesSlider ? 'block' : 'none';
-        
+
         map.removeLayer(leftLayerGroup);
         map.removeLayer(rightLayerGroup);
         map.removeLayer(leftBinaryGroup);
         map.removeLayer(rightBinaryGroup);
+        map.removeLayer(leftRisqueGroup);
+        map.removeLayer(rightRisqueGroup);
         if (layerInondation && map.hasLayer(layerInondation)) map.removeLayer(layerInondation);
         if (layerGlissement && map.hasLayer(layerGlissement)) map.removeLayer(layerGlissement);
-        
+
         if (mode === 'comparaison') {
             map.addLayer(leftLayerGroup);
             map.addLayer(rightLayerGroup);
+            updateMapLayers();
         } else if (mode === 'binaire') {
             map.addLayer(leftBinaryGroup);
             map.addLayer(rightBinaryGroup);
-            loadBinaryLayers(); 
+            updateMapLayers();
+        } else if (mode === 'risque') {
+            map.addLayer(leftRisqueGroup);
+            map.addLayer(rightRisqueGroup);
+            loadRisqueLayers();
         } else if (mode === 'inondation') {
             if (layerInondation) map.addLayer(layerInondation);
         } else if (mode === 'glissement') {
             if (layerGlissement) map.addLayer(layerGlissement);
         }
-        
+
         updateZoomText();
         syncLegends();
         applyClip();
     }
 
     document.getElementById('btn-comparaison').addEventListener('click', () => setMode('comparaison'));
-    document.getElementById('btn-binaire').addEventListener('click', () => setMode('binaire'));
-    document.getElementById('btn-inondation').addEventListener('click', () => setMode('inondation'));
-    document.getElementById('btn-glissement').addEventListener('click', () => setMode('glissement'));
+    document.getElementById('btn-binaire').addEventListener('click',     () => setMode('binaire'));
+    document.getElementById('btn-risque').addEventListener('click',      () => setMode('risque'));
+    document.getElementById('btn-inondation').addEventListener('click',  () => setMode('inondation'));
+    document.getElementById('btn-glissement').addEventListener('click',  () => setMode('glissement'));
 
-    const BIG = 99999; 
+    // ── Slider / clip ──────────────────────────────────────────────────────────
+    const BIG = 99999;
     let currentPercent = 50;
-    const sliderLine = document.getElementById('slider-line');
+    const sliderLine   = document.getElementById('slider-line');
 
     function applyClip() {
         const mapSize  = map.getSize();
         const sliderPx = mapSize.x * currentPercent / 100;
-
         const layerPoint = map.containerPointToLayerPoint(L.point(sliderPx, 0));
         const x = layerPoint.x;
 
         const leftPane  = map.getPane('leftPane');
         const rightPane = map.getPane('rightPane');
-        
         if (!leftPane || !rightPane) return;
 
-        leftPane.style.clipPath  =
-            `polygon(${-BIG}px ${-BIG}px, ${x}px ${-BIG}px, ${x}px ${BIG}px, ${-BIG}px ${BIG}px)`;
-        rightPane.style.clipPath =
-            `polygon(${x}px ${-BIG}px, ${BIG}px ${-BIG}px, ${BIG}px ${BIG}px, ${x}px ${BIG}px)`;
+        leftPane.style.clipPath  = `polygon(${-BIG}px ${-BIG}px, ${x}px ${-BIG}px, ${x}px ${BIG}px, ${-BIG}px ${BIG}px)`;
+        rightPane.style.clipPath = `polygon(${x}px ${-BIG}px, ${BIG}px ${-BIG}px, ${BIG}px ${BIG}px, ${x}px ${BIG}px)`;
 
         sliderLine.style.left = `${currentPercent}%`;
     }
@@ -672,21 +893,18 @@
     map.on('zoomend', updateMapLayers);
 
     let isSliding = false;
-
     sliderLine.addEventListener('mousedown', (e) => {
         isSliding = true;
         e.preventDefault();
         map.dragging.disable();
         document.body.style.cursor = 'ew-resize';
     });
-
     window.addEventListener('mouseup', () => {
         if (!isSliding) return;
         isSliding = false;
         map.dragging.enable();
         document.body.style.cursor = 'default';
     });
-
     window.addEventListener('mousemove', (e) => {
         if (!isSliding) return;
         const mapRect = document.getElementById('map').getBoundingClientRect();
@@ -695,6 +913,7 @@
         applyClip();
     });
 
+    // ── Toast ──────────────────────────────────────────────────────────────────
     const toast        = document.getElementById('toast');
     const toastMessage = document.getElementById('toast-message');
 
@@ -708,6 +927,7 @@
         }, 3000);
     }
 
+    // ── Share ──────────────────────────────────────────────────────────────────
     const shareButton   = document.getElementById('share-button');
     const shareDropdown = document.getElementById('share-dropdown');
 
@@ -716,16 +936,13 @@
         shareDropdown.classList.toggle('hidden');
         shareDropdown.classList.toggle('show');
     });
-
     document.addEventListener('click', () => {
         shareDropdown.classList.add('hidden');
         shareDropdown.classList.remove('show');
     });
 
     document.getElementById('btn-copy-link').addEventListener('click', () => {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            showToast('Lien de la page copié !');
-        });
+        navigator.clipboard.writeText(window.location.href).then(() => showToast('Lien de la page copié !'));
     });
 
     document.getElementById('btn-export-map').addEventListener('click', async () => {
@@ -733,27 +950,103 @@
         const controls   = document.querySelectorAll('.leaflet-control-container, #slider-line, .absolute');
         controls.forEach(el => el.style.visibility = 'hidden');
         try {
-            const canvas = await html2canvas(mapElement, {
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: null,
-                scale: 2
-            });
+            const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true, backgroundColor: null, scale: 2 });
             const link = document.createElement('a');
             link.download = `terra-map-export-${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             showToast('Exportation réussie !');
         } catch (err) {
-            console.error('Export failed:', err);
             showToast("Erreur lors de l'exportation");
         } finally {
             controls.forEach(el => el.style.visibility = 'visible');
         }
     });
 
-    applyClip();         
-    updateMapLayers();   
+    // ── Shared tooltip positioner ──────────────────────────────────────────────
+    function positionTooltip(el, e) {
+        const tw = el.offsetWidth  || 260;
+        const th = el.offsetHeight || 100;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        let x = e.clientX + 12;
+        let y = e.clientY - th - 8;
+        if (x + tw > vw - 8) x = e.clientX - tw - 12;
+        if (y < 8)            y = e.clientY + 20;
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+    }
+
+    // ── PHI info tooltip ───────────────────────────────────────────────────────
+    const phiIcon    = document.getElementById('phi-info-icon');
+    const phiTooltip = document.getElementById('phi-tooltip');
+
+    phiIcon.addEventListener('mouseenter', (e) => {
+        phiTooltip.style.display = 'block';
+        requestAnimationFrame(() => { phiTooltip.style.opacity = '1'; });
+        positionTooltip(phiTooltip, e);
+    });
+    phiIcon.addEventListener('mousemove',  (e) => positionTooltip(phiTooltip, e));
+    phiIcon.addEventListener('mouseleave', () => {
+        phiTooltip.style.opacity = '0';
+        setTimeout(() => { phiTooltip.style.display = 'none'; }, 150);
+    });
+
+    // ── Inondation info tooltip ────────────────────────────────────────────────
+    const inondationIcon    = document.getElementById('inondation-info-icon');
+    const inondationTooltip = document.getElementById('inondation-tooltip');
+    let inondationHideTimer = null;
+
+    inondationIcon.addEventListener('mouseenter', (e) => {
+        clearTimeout(inondationHideTimer);
+        inondationTooltip.style.display = 'block';
+        requestAnimationFrame(() => { inondationTooltip.style.opacity = '1'; });
+        positionTooltip(inondationTooltip, e);
+    });
+    inondationIcon.addEventListener('mousemove',  (e) => positionTooltip(inondationTooltip, e));
+    inondationIcon.addEventListener('mouseleave', () => {
+        inondationHideTimer = setTimeout(() => {
+            inondationTooltip.style.opacity = '0';
+            setTimeout(() => { inondationTooltip.style.display = 'none'; }, 150);
+        }, 120);
+    });
+    inondationTooltip.addEventListener('mouseenter', () => clearTimeout(inondationHideTimer));
+    inondationTooltip.addEventListener('mouseleave', () => {
+        inondationHideTimer = setTimeout(() => {
+            inondationTooltip.style.opacity = '0';
+            setTimeout(() => { inondationTooltip.style.display = 'none'; }, 150);
+        }, 120);
+    });
+
+    // ── Glissement info tooltip ────────────────────────────────────────────────
+    const glissementIcon    = document.getElementById('glissement-info-icon');
+    const glissementTooltip = document.getElementById('glissement-tooltip');
+    let glissementHideTimer = null;
+
+    glissementIcon.addEventListener('mouseenter', (e) => {
+        clearTimeout(glissementHideTimer);
+        glissementTooltip.style.display = 'block';
+        requestAnimationFrame(() => { glissementTooltip.style.opacity = '1'; });
+        positionTooltip(glissementTooltip, e);
+    });
+    glissementIcon.addEventListener('mousemove',  (e) => positionTooltip(glissementTooltip, e));
+    glissementIcon.addEventListener('mouseleave', () => {
+        glissementHideTimer = setTimeout(() => {
+            glissementTooltip.style.opacity = '0';
+            setTimeout(() => { glissementTooltip.style.display = 'none'; }, 150);
+        }, 120);
+    });
+    glissementTooltip.addEventListener('mouseenter', () => clearTimeout(glissementHideTimer));
+    glissementTooltip.addEventListener('mouseleave', () => {
+        glissementHideTimer = setTimeout(() => {
+            glissementTooltip.style.opacity = '0';
+            setTimeout(() => { glissementTooltip.style.display = 'none'; }, 150);
+        }, 120);
+    });
+
+    // ── Init ───────────────────────────────────────────────────────────────────
+    applyClip();
+    updateMapLayers();
 </script>
 </body>
 </html>
