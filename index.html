@@ -254,6 +254,10 @@
                 <span class="material-symbols-outlined">contrast</span>
                 <span class="font-semibold">Comparaison (Binaire)</span>
             </button>
+            <button id="btn-combinaison" class="w-full text-left flex items-center gap-3 hover:bg-surface-container-high text-on-surface rounded-sm px-4 py-3 transition-all">
+                <span class="material-symbols-outlined">layers</span>
+                <span class="font-semibold">Combinaison des 2 modèles</span>
+            </button>
             <button id="btn-risque" class="w-full text-left flex items-center gap-3 hover:bg-surface-container-high text-on-surface rounded-sm px-4 py-3 transition-all">
                 <span class="material-symbols-outlined">crisis_alert</span>
                 <span class="font-semibold">Typologie informalité/risques</span>
@@ -294,10 +298,8 @@
             </div>
         </div>
 
-        <!-- Legend panel -->
         <div class="absolute bottom-6 right-6 z-[1000] w-72 bg-surface-bright/95 backdrop-blur-md p-5 rounded-sm shadow-xl border border-outline-variant/10 pointer-events-auto max-h-[85vh] overflow-y-auto">
             
-            <!-- Probabilités legend -->
             <div id="legend-base">
                 <div class="flex items-center gap-2 mb-3">
                     <h3 class="font-headline font-bold text-primary">Probabilité d'habitat informel (PHI)</h3>
@@ -321,7 +323,6 @@
                 </div>
             </div>
 
-            <!-- Binaire legend — probabilité élevée uniquement -->
             <div id="legend-binaire" class="hidden">
                 <h3 class="font-headline font-bold text-primary mb-3">Probabilité élevée uniquement</h3>
                 <div class="space-y-3">
@@ -332,7 +333,29 @@
                 </div>
             </div>
 
-            <!-- Risque Composite legend -->
+            <div id="legend-combinaison" class="hidden">
+                <div class="flex items-center gap-2 mb-3">
+                    <h3 class="font-headline font-bold text-primary">Combinaison (PHI)</h3>
+                    <div class="relative flex-shrink-0">
+                        <span id="combinaison-info-icon" class="flex items-center justify-center w-4 h-4 rounded-full border border-outline text-[10px] font-bold text-on-surface-variant cursor-default select-none leading-none">i</span>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-none bg-[#4FB0C6] opacity-70 shadow-sm"></div>
+                        <span class="text-sm text-on-surface-variant">Faible</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-none bg-[#F5F5DC] opacity-70 shadow-sm border border-outline/20"></div>
+                        <span class="text-sm text-on-surface-variant">Moyenne</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-none bg-[#BC4749] opacity-70 shadow-sm"></div>
+                        <span class="text-sm text-on-surface-variant">Elevée</span>
+                    </div>
+                </div>
+            </div>
+
             <div id="legend-risque" class="hidden">
                 <h3 class="font-headline font-bold text-primary mb-3">🔴 Typologie informalité/risques</h3>
                 <p class="text-[10px] text-on-surface-variant mb-2 leading-snug">Croisement probabilité d'habitat informel (PHI) × exposition aux risques d'inondation et de glissement de terrain</p>
@@ -374,7 +397,6 @@
                 </table>
             </div>
 
-            <!-- Inondation legend -->
             <div id="legend-inondation" class="hidden">
                 <div class="flex items-center gap-2 mb-3">
                     <h3 class="font-headline font-bold text-primary">🌊 Risque Inondation</h3>
@@ -396,7 +418,6 @@
                 </div>
             </div>
 
-            <!-- Glissement legend -->
             <div id="legend-glissement" class="hidden">
                 <div class="flex items-center gap-2 mb-3">
                     <h3 class="font-headline font-bold text-primary">⛰️ Risque Glissement</h3>
@@ -423,7 +444,6 @@
             </div>
         </div>
 
-        <!-- Model labels (shown on slider modes) -->
         <div id="label-aef" class="absolute left-6 z-[1000] pointer-events-none top-16">
             <div class="px-4 py-2 backdrop-blur-md rounded-lg font-bold font-headline drop-shadow-md bg-white/80 border border-white/20" style="color: rgb(66, 133, 244);">AEF</div>
         </div>
@@ -437,9 +457,6 @@
     </main>
 </div>
 
-<!-- ── Tooltips ─────────────────────────────────────────────────────────────── -->
-
-<!-- PHI tooltip -->
 <div id="phi-tooltip" style="
     position: fixed;
     z-index: 9999;
@@ -460,7 +477,26 @@
     Les seuils ont été calculés de manière indépendante pour chaque raster en utilisant les tertiles (33% et 66%) de leur propre distribution de fréquences, permettant ainsi de découper les pixels valides de chaque image en trois classes (basse, moyenne et haute probabilité) adaptées à la dynamique de leurs données respectives. L'agrégation des pixels lors du dézoom se fait par moyenne.
 </div>
 
-<!-- Inondation tooltip -->
+<div id="combinaison-tooltip" style="
+    position: fixed;
+    z-index: 9999;
+    width: 260px;
+    background: #31302d;
+    color: #f3f0eb;
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    line-height: 1.55;
+    border-radius: 2px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    display: none;
+">
+    Après validation, le modèle AEF est meilleur pour détecter les zones de bâti formel, et le modèle TESSERA est meilleur pour détecter les zones de bâti informel. Ainsi nous avons extrait uniquement les PHI élevée de TESSERA et les PHI faibles de AEF que nous avons superposé. L'intersection des deux a été considérée comme une PHI moyenne. Nous y avons ensuite appliqué un filtre médian de 10*10.
+</div>
+
 <div id="inondation-tooltip" style="
     position: fixed;
     z-index: 9999;
@@ -482,7 +518,6 @@
     Source : Observatoire de Mayotte, <a href="https://catalogue.observatoire-de-mayotte.fr/geonetwork/srv/fre/catalog.search#/metadata/8746ee2c-c0fa-4dce-9251-6cc3b859e59e" target="_blank" rel="noopener" style="color: #c3caa9; text-decoration: underline;">catalogue.observatoire-de-mayotte.fr</a>
 </div>
 
-<!-- Glissement tooltip -->
 <div id="glissement-tooltip" style="
     position: fixed;
     z-index: 9999;
@@ -507,10 +542,13 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     // ── State ──────────────────────────────────────────────────────────────────
-    let currentMode = 'comparaison'; // 'comparaison' | 'binaire' | 'risque' | 'inondation' | 'glissement'
+    let currentMode = 'comparaison'; // 'comparaison' | 'binaire' | 'combinaison' | 'risque' | 'inondation' | 'glissement'
     let layerInondation = null;
     let layerGlissement = null;
     let risqueLoaded    = false;
+    
+    let combinaisonLoaded = false;
+    let combinaisonGroup = L.layerGroup();
 
     // ── Map setup ──────────────────────────────────────────────────────────────
     const map = L.map('map', {
@@ -600,7 +638,7 @@
 
     // ── Legend sync ────────────────────────────────────────────────────────────
     function syncLegends() {
-        const ids = ['legend-base', 'legend-binaire', 'legend-risque', 'legend-inondation', 'legend-glissement'];
+        const ids = ['legend-base', 'legend-binaire', 'legend-risque', 'legend-inondation', 'legend-glissement', 'legend-combinaison'];
         ids.forEach(id => document.getElementById(id).classList.add('hidden'));
 
         if (currentMode === 'comparaison') {
@@ -611,6 +649,12 @@
                 document.getElementById('legend-glissement').className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
         } else if (currentMode === 'binaire') {
             document.getElementById('legend-binaire').classList.remove('hidden');
+            if (layerInondation && map.hasLayer(layerInondation))
+                document.getElementById('legend-inondation').className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
+            if (layerGlissement && map.hasLayer(layerGlissement))
+                document.getElementById('legend-glissement').className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
+        } else if (currentMode === 'combinaison') {
+            document.getElementById('legend-combinaison').classList.remove('hidden');
             if (layerInondation && map.hasLayer(layerInondation))
                 document.getElementById('legend-inondation').className = 'mt-4 pt-4 border-t border-outline-variant/20 block';
             if (layerGlissement && map.hasLayer(layerGlissement))
@@ -738,6 +782,27 @@
             showToast("Erreur chargement risque composite.");
         }
     }
+    
+    async function loadCombinaisonLayer() {
+        if (combinaisonLoaded) return;
+        showToast("Chargement de la couche combinaison...");
+        try {
+            const response = await fetch('lissage_combinaison2.json');
+            if (response.ok) {
+                const data = await response.json();
+                L.geoJSON(data, { style: styleFeature }).addTo(combinaisonGroup);
+                combinaisonLoaded = true;
+                const bounds = combinaisonGroup.getBounds();
+                if (bounds && bounds.isValid()) map.fitBounds(bounds);
+                showToast("Couche combinaison chargée !");
+            } else {
+                showToast("Fichier lissage_combinaison2.json introuvable.");
+            }
+        } catch (e) {
+            console.warn("Erreur chargement de la couche combinaison :", e);
+            showToast("Erreur chargement combinaison.");
+        }
+    }
 
     // ── Zoom & update ──────────────────────────────────────────────────────────
     function updateZoomText() {
@@ -749,6 +814,7 @@
         let textInfo = `Zoom actuel : <b>${zoom}</b><br>`;
         if      (currentMode === 'comparaison') textInfo += `Fichier actif : <b>Probabilités (${resolution})</b>`;
         else if (currentMode === 'binaire')     textInfo += `Fichier actif : <b>Probabilité élevée (${resolution})</b>`;
+        else if (currentMode === 'combinaison') textInfo += `Fichier actif : <b>Combinaison des 2 modèles</b>`;
         else if (currentMode === 'risque')      textInfo += `Fichier actif : <b>Typologie informalité/risques</b>`;
         else if (currentMode === 'inondation')  textInfo += `Fichier actif : <b>Inondation</b>`;
         else if (currentMode === 'glissement')  textInfo += `Fichier actif : <b>Glissement</b>`;
@@ -810,6 +876,7 @@
         const btns = {
             'comparaison': document.getElementById('btn-comparaison'),
             'binaire':     document.getElementById('btn-binaire'),
+            'combinaison': document.getElementById('btn-combinaison'),
             'risque':      document.getElementById('btn-risque'),
             'inondation':  document.getElementById('btn-inondation'),
             'glissement':  document.getElementById('btn-glissement')
@@ -836,6 +903,7 @@
         map.removeLayer(rightBinaryGroup);
         map.removeLayer(leftRisqueGroup);
         map.removeLayer(rightRisqueGroup);
+        map.removeLayer(combinaisonGroup);
         if (layerInondation && map.hasLayer(layerInondation)) map.removeLayer(layerInondation);
         if (layerGlissement && map.hasLayer(layerGlissement)) map.removeLayer(layerGlissement);
 
@@ -847,6 +915,9 @@
             map.addLayer(leftBinaryGroup);
             map.addLayer(rightBinaryGroup);
             updateMapLayers();
+        } else if (mode === 'combinaison') {
+            map.addLayer(combinaisonGroup);
+            loadCombinaisonLayer();
         } else if (mode === 'risque') {
             map.addLayer(leftRisqueGroup);
             map.addLayer(rightRisqueGroup);
@@ -864,6 +935,7 @@
 
     document.getElementById('btn-comparaison').addEventListener('click', () => setMode('comparaison'));
     document.getElementById('btn-binaire').addEventListener('click',     () => setMode('binaire'));
+    document.getElementById('btn-combinaison').addEventListener('click', () => setMode('combinaison'));
     document.getElementById('btn-risque').addEventListener('click',      () => setMode('risque'));
     document.getElementById('btn-inondation').addEventListener('click',  () => setMode('inondation'));
     document.getElementById('btn-glissement').addEventListener('click',  () => setMode('glissement'));
@@ -990,6 +1062,21 @@
     phiIcon.addEventListener('mouseleave', () => {
         phiTooltip.style.opacity = '0';
         setTimeout(() => { phiTooltip.style.display = 'none'; }, 150);
+    });
+
+    // ── Combinaison info tooltip ───────────────────────────────────────────────
+    const combinaisonIcon    = document.getElementById('combinaison-info-icon');
+    const combinaisonTooltip = document.getElementById('combinaison-tooltip');
+
+    combinaisonIcon.addEventListener('mouseenter', (e) => {
+        combinaisonTooltip.style.display = 'block';
+        requestAnimationFrame(() => { combinaisonTooltip.style.opacity = '1'; });
+        positionTooltip(combinaisonTooltip, e);
+    });
+    combinaisonIcon.addEventListener('mousemove',  (e) => positionTooltip(combinaisonTooltip, e));
+    combinaisonIcon.addEventListener('mouseleave', () => {
+        combinaisonTooltip.style.opacity = '0';
+        setTimeout(() => { combinaisonTooltip.style.display = 'none'; }, 150);
     });
 
     // ── Inondation info tooltip ────────────────────────────────────────────────
