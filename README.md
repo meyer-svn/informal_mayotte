@@ -16,3 +16,5 @@ Les résultats sont mis en relation avec des données de risque d'inondation et 
 **Auteur** : Sven Meyer, Master OTG, Université de Strasbourg.
 
 **Encadrant** : Dr. Romain Wenger, L.I.V.E., Université de Strasbourg.
+
+**Webmap accessible avec le lien suivant** : https://meyer-svn.github.io/informal_mayotte/ 
