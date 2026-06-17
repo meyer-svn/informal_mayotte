@@ -189,6 +189,35 @@
         accent-color: #3e442b !important;
         margin: 0 !important;
     }
+
+    /* Échelle (Scale) épurée et centrée pour fond satellite */
+    .leaflet-bottom.leaflet-left {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        bottom: 24px;
+        z-index: 1000;
+        pointer-events: none;
+    }
+    .leaflet-control-scale {
+        margin-left: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    .leaflet-control-scale-line {
+        background: transparent !important;
+        border: 2px solid rgba(255, 255, 255, 0.85) !important;
+        border-top: none !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        text-shadow: 0px 1px 2px rgba(0,0,0,0.8), 0px 0px 4px rgba(0,0,0,0.5);
+        font-family: 'Manrope', sans-serif !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        padding: 2px 6px 4px 6px !important;
+        border-radius: 0 0 2px 2px !important;
+        box-shadow: 0px 2px 4px rgba(0,0,0,0.3) !important;
+        line-height: 1 !important;
+    }
+
     #share-dropdown {
         transform-origin: bottom center;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -558,6 +587,12 @@
     }).setView([46.603354, 1.888334], 6);
 
     L.control.zoom({ position: 'topright' }).addTo(map);
+    
+    L.control.scale({
+        position: 'bottomleft',
+        metric: true,
+        imperial: false
+    }).addTo(map);
 
     const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
