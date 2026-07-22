@@ -22,6 +22,7 @@ The results are cross-referenced with flood and landslide risk data.
 ## Credits
 
 **Author**: Sven Meyer, Master OTG, University of Strasbourg.
+
 **Supervisor**: PhD Romain Wenger, L.I.V.E., University of Strasbourg.
 
 ## Link
@@ -52,6 +53,7 @@ Les résultats sont mis en relation avec des données de risque d'inondation et 
 ## Crédits
 
 **Auteur** : Sven Meyer, Master OTG, Université de Strasbourg.
+
 **Encadrant** : Dr. Romain Wenger, L.I.V.E., Université de Strasbourg.
 
 ## Lien
