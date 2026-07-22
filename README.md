@@ -1,4 +1,4 @@
-# EN :
+# ENGLISH :
 
 ## Overview
 
@@ -29,7 +29,7 @@ The results are cross-referenced with flood and landslide risk data.
 
 [Webmap](https://meyer-svn.github.io/informal_mayotte/)
 
-# FR :
+# FRANCAIS :
 
 ## Description
 
