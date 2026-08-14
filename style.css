@@ -1,0 +1,193 @@
+/* ==========================================================================
+   AEF & TESSERA Spatial Comparator — Styles
+   ========================================================================== */
+
+/* --- Base / full-screen layout --- */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Manrope', sans-serif;
+}
+h1, h2, h3 {
+    font-family: 'Epilogue', serif;
+}
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+#map {
+    height: 100%;
+    width: 100%;
+    z-index: 10;
+}
+
+/* --- Comparison slider --- */
+#slider-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(229, 226, 221, 0.6);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+    cursor: ew-resize;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+#slider-thumb {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    border: 2px solid rgb(229, 226, 221);
+    z-index: 1002;
+    cursor: ew-resize;
+    pointer-events: auto;
+}
+
+/* --- Leaflet controls (zoom, layers) --- */
+.leaflet-control-layers {
+    border: 1px solid rgba(119, 120, 110, 0.2) !important;
+    border-radius: 0.125rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+.leaflet-control-zoom {
+    border: 1px solid rgba(119, 120, 110, 0.2) !important;
+    border-radius: 0.125rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    overflow: hidden !important;
+}
+.leaflet-bar a {
+    color: #46473f !important;
+    border-radius: 0 !important;
+}
+.leaflet-bar a:hover {
+    background-color: #f0ede8 !important;
+    color: #282e17 !important;
+}
+.leaflet-control-layers {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 0.125rem !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+.leaflet-control-layers-toggle {
+    background-image: none !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative;
+}
+.leaflet-control-layers-toggle::before {
+    content: 'layers';
+    font-family: 'Material Symbols Outlined';
+    font-size: 24px;
+    color: #3e442b;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.leaflet-control-layers-expanded {
+    padding: 12px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #1c1c19 !important;
+    font-family: 'Manrope', sans-serif !important;
+    font-size: 13px !important;
+    border: none !important;
+}
+.leaflet-control-layers-base label, .leaflet-control-layers-overlays label {
+    margin-bottom: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    cursor: pointer;
+}
+.leaflet-control-layers-selector {
+    accent-color: #3e442b !important;
+    margin: 0 !important;
+}
+
+/* --- Clean, centered scale bar for satellite basemap --- */
+.leaflet-bottom.leaflet-left {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    bottom: 24px;
+    z-index: 1000;
+    pointer-events: none;
+}
+.leaflet-control-scale {
+    margin-left: 0 !important;
+    margin-bottom: 0 !important;
+}
+.leaflet-control-scale-line {
+    background: transparent !important;
+    border: 2px solid rgba(255, 255, 255, 0.85) !important;
+    border-top: none !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0px 1px 2px rgba(0,0,0,0.8), 0px 0px 4px rgba(0,0,0,0.5);
+    font-family: 'Manrope', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    padding: 2px 6px 4px 6px !important;
+    border-radius: 0 0 2px 2px !important;
+    box-shadow: 0px 2px 4px rgba(0,0,0,0.3) !important;
+    line-height: 1 !important;
+}
+
+/* --- Share menu --- */
+#share-dropdown {
+    transform-origin: bottom center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#share-dropdown.hidden {
+    display: none;
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+}
+#share-dropdown.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* --- "Composite risk" legend matrix table --- */
+.legend-matrix {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 10px;
+}
+.legend-matrix th, .legend-matrix td {
+    border: 1px solid rgba(119,120,110,0.25);
+    padding: 4px 5px;
+    text-align: center;
+    line-height: 1.3;
+}
+.legend-matrix th {
+    background: rgba(240,237,232,0.6);
+    font-weight: 600;
+    font-size: 9px;
+    color: #46473f;
+}
+.legend-matrix td {
+    font-size: 9px;
+    font-weight: 500;
+}
+.legend-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
